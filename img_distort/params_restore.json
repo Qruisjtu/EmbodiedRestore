@@ -1,0 +1,87 @@
+{
+    "additive_gaussian_noise": {
+        "mean": 0,
+        "std": 90
+    },
+    "color_component_noise": {
+        "luminance_std": 30,
+        "color_std": 80
+    },
+    "spatially_correlated_noise": {
+        "correlation_strength": 1.0
+    },
+    "masked_noise": {
+        "mask_threshold": 128,
+        "noise_std": 160
+    },
+    "high_frequency_noise": {
+        "frequency_cutoff": 0.3,
+        "noise_std": 100
+    },
+    "impulse_noise": {
+        "salt_prob": 0.2,
+        "pepper_prob": 0.2
+    },
+    "quantization_noise": {
+        "levels": 4
+    },
+    "gaussian_blur": {
+        "kernel_size": 13,
+        "sigma": 15
+    },
+    "image_denoising": {
+        "method":  "bilateral"
+    },
+    "jpeg_compression": {
+        "quality": 5
+    },
+    "jpeg2000_compression": {
+        "quality": 10
+    },
+    "jpeg_transmission_errors": {
+        "error_prob": 0.15
+    },
+    "jpeg2000_transmission_errors": {
+        "error_prob": 0.15
+    },
+    "non_eccentricity_pattern_noise": {
+        "pattern_strength": 0.8
+    },
+    "local_block_distortions": {
+        "block_size": 32,
+        "distortion_intensity": 5.0
+    },
+    "mean_shift": {
+        "shift_value": 90
+    },
+    "contrast_change": {
+        "contrast_factor": 3.0
+    },
+    "color_saturation_change": {
+        "saturation_factor": 3.0
+    },
+    "multiplicative_gaussian_noise": {
+        "mean": 1,
+        "std": 0.5
+    },
+    "comfort_noise": {
+        "noise_level": 1.0
+    },
+    "lossy_compression_noisy_images": {
+        "noise_std": 60,
+        "compression_quality": 10
+    },
+    "color_quantization_dither": {
+        "levels": 4
+    },
+    "chromatic_aberrations": {
+        "aberration_strength": 8
+    },
+    "sparse_sampling_reconstruction": {
+        "sampling_ratio": 0.6
+    },
+    "ringing_artifacts": {
+        "strength": 1.0,
+        "frequency_scale": 15
+    }
+}

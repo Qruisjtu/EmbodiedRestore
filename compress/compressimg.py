@@ -4,6 +4,19 @@ import math
 import os
 import subprocess
 import time
+# from compress.instantir_impl import init_instantir, instantir_enhance
+# from compress.dfpir_impl2 import init_dfpir, dfpir_enhance
+# from compress.swinir_impl2 import init_swinir, swinir_enhance
+# from compress.realesrgan_impl2 import init_realesrgan, realesrgan_enhance
+# from compress.foundir_impl2 import init_foundir, foundir_enhance
+# from compress.hypir_impl import init_hypir, hypir_enhance
+# from compress.bird_impl2 import init_bird, bird_enhance
+# from compress.sdxl_impl2 import init_sdxl, sdxl_enhance
+# from compress.sd21_impl2 import init_sd21, sd21_enhance
+# from compress.playground_impl2 import init_playground, playground_enhance
+# from compress.ssd1b_impl2 import init_ssd1b, ssd1b_enhance
+# from compress.kandinsky_impl2 import init_kandinsky, kandinsky_enhance
+# from compress.varformer_impl2 import init_varformer, varformer_enhance
 from pathlib import Path
 import importlib
 import cv2 as cv
@@ -22,53 +35,57 @@ from compressai.zoo import (
     mbt2018_mean,
 )
 import uuid, shutil
+from img_distort import distort_lib
+from img_distort.distort_lib import STRONG_PARAMS
 CAMERARESOLUTION = 256 * 256 
-MODELLIST = [
-    'mbt2018_mean',
-    'mbt2018',
-    'cheng2020_attn',
-    'bmshj2018_factorized',
-    'bmshj2018_hyperprior',
-    'cheng2020_anchor',
-    'jpeg',
-    'webp',
-    # 'lichpcm',
-    # 'dcae',
-    # 'rwkv',
-]
-MODELQUALITY = {
-    'mbt2018_mean': [1, 2, 3, 4, 5, 6, 7, 8],
-    'mbt2018': [1, 2, 3, 4, 5, 6, 7, 8],
-    'cheng2020_attn': [1, 2, 3, 4, 5, 6],
-    'bmshj2018_factorized': [1, 2, 3, 4, 5, 6, 7, 8],
-    'bmshj2018_hyperprior': [1, 2, 3, 4, 5, 6, 7, 8],
-    'cheng2020_anchor': [1, 2, 3, 4, 5, 6],
-    'jpeg': [5, 10, 20, 30, 40, 50, 60, 70, 80, 90],
-    'webp': [5, 10, 20, 30, 40, 50, 60, 70, 80, 90],
-    'lichpcm': [1, 2, 3, 4, 5, 6],
-    'dcae': [1, 2, 3, 4, 5, 6],
-    'rwkv': [1, 2, 3, 4, 5, 6],
-}
-DOWNSAMPLEGRADE = {
-    '1':8,
-    '7/8':7,
-    '3/4':6,
-    '5/8':5,
-    '1/2':4,
-    '3/8':3,
-    '1/4':2,
-    '1/8':1
-    }
-MODELQUADOWN={
-    "mbt2018":[[1,'1/4'],[1,'1/2'],[1,'3/4'],[1,'1'],[2,'1']],
-    "cheng2020_anchor":[[1,'1/4'],[1,'1/2'],[1,'3/4'],[1,'1'],[2,'1']],
-    "bmshj2018_hyperprior":[[1,'1/4'],[1,'1/2'],[1,'3/4'],[2,'1']],
-    "jpeg":[[5,'1/8'],[10,'1/8'],[20,'1/8'],[40,'1/8'],[10,'1/4']],
-    "webp":[[5,'1/8'],[5,'1/4'],[10,'3/8'],[10,'1/2'],[20,'1/2'],[40,'1/2']],
-    'lichpcm':[[1,'1/8'],[1,'1/4'],[1,'1/2'],[1,'3/4'],[1,'1'],[3,'1']],
-    'dcae':[[1,'1/8'],[1,'1/4'],[1,'1/2'],[1,'3/4'],[1,'1'],[3,'1']],
-    'rwkv':[[1,'1/8'],[1,'1/4'],[1,'1/2'],[1,'3/4'],[1,'1'],[3,'1']],
-}
+#Below are parameters for EmbodiedComp
+# MODELLIST = [
+#     'mbt2018_mean',
+#     'mbt2018',
+#     'cheng2020_attn',
+#     'bmshj2018_factorized',
+#     'bmshj2018_hyperprior',
+#     'cheng2020_anchor',
+#     'instantir',
+#     'jpeg',
+#     'webp',
+#     'lichpcm',
+#     'dcae',
+#     'rwkv',
+# ]
+# MODELQUALITY = {
+#     'mbt2018_mean': [1, 2, 3, 4, 5, 6, 7, 8],
+#     'mbt2018': [1, 2, 3, 4, 5, 6, 7, 8],
+#     'cheng2020_attn': [1, 2, 3, 4, 5, 6],
+#     'bmshj2018_factorized': [1, 2, 3, 4, 5, 6, 7, 8],
+#     'bmshj2018_hyperprior': [1, 2, 3, 4, 5, 6, 7, 8],
+#     'cheng2020_anchor': [1, 2, 3, 4, 5, 6],
+#     'jpeg': [5, 10, 20, 30, 40, 50, 60, 70, 80, 90],
+#     'webp': [5, 10, 20, 30, 40, 50, 60, 70, 80, 90],
+#     'lichpcm': [1, 2, 3, 4, 5, 6],
+#     'dcae': [1, 2, 3, 4, 5, 6],
+#     'rwkv': [1, 2, 3, 4, 5, 6],
+# }
+# DOWNSAMPLEGRADE = {
+#     '1':8,
+#     '7/8':7,
+#     '3/4':6,
+#     '5/8':5,
+#     '1/2':4,
+#     '3/8':3,
+#     '1/4':2,
+#     '1/8':1
+#     }
+# MODELQUADOWN={
+#     "mbt2018":[[1,'1/4'],[1,'1/2'],[1,'3/4'],[1,'1'],[2,'1']],
+#     "cheng2020_anchor":[[1,'1/4'],[1,'1/2'],[1,'3/4'],[1,'1'],[2,'1']],
+#     "bmshj2018_hyperprior":[[1,'1/4'],[1,'1/2'],[1,'3/4'],[2,'1']],
+#     "jpeg":[[5,'1/8'],[10,'1/8'],[20,'1/8'],[40,'1/8'],[10,'1/4']],
+#     "webp":[[5,'1/8'],[5,'1/4'],[10,'3/8'],[10,'1/2'],[20,'1/2'],[40,'1/2']],
+#     'lichpcm':[[1,'1/8'],[1,'1/4'],[1,'1/2'],[1,'3/4'],[1,'1'],[3,'1']],
+#     'dcae':[[1,'1/8'],[1,'1/4'],[1,'1/2'],[1,'3/4'],[1,'1'],[3,'1']],
+#     'rwkv':[[1,'1/8'],[1,'1/4'],[1,'1/2'],[1,'3/4'],[1,'1'],[3,'1']],
+# }
 assert torch.cuda.is_available(),print("cuda is not available")
 device = "cuda" 
 CODEC_DIR = Path(__file__).parent / 'codec'
@@ -135,6 +152,260 @@ class Codec(ABC):
     def compress(self, image_array)->tuple:
         pass
 
+class Distorter(Codec):
+    def __init__(self,quality=1,type=0):
+        super().__init__(quality)
+        noise_names = ["additive_gaussian_noise", "color_component_noise", "spatially_correlated_noise", "masked_noise", "high_frequency_noise", "impulse_noise", "quantization_noise", "gaussian_blur", "image_denoising", "jpeg_compression", "jpeg2000_compression", "jpeg_transmission_errors", "jpeg2000_transmission_errors", "non_eccentricity_pattern_noise", "local_block_distortions", "mean_shift", "contrast_change", "color_saturation_change", "multiplicative_gaussian_noise", "comfort_noise", "lossy_compression_noisy_images", "color_quantization_dither", "chromatic_aberrations", "sparse_sampling_reconstruction", "ringing_artifacts"]
+        assert type < len(noise_names) , print(f"type should be in range 0-{len(noise_names)-1}")
+        self.type = noise_names[type]
+    def compress(self, image_array):
+        distorter = distort_lib.ImageDistortion(image_array)
+        add_noise = getattr(distorter, self.type)
+        img_dis = add_noise(**STRONG_PARAMS[self.type])
+        return img_dis,24
+
+class Enhance(Codec):
+    def __init__(self, quality, type=None):
+        super().__init__(quality)
+        self.type = type
+        self.init()
+
+    def init(self):
+        pass
+
+    def compress(self, image_array):
+        raise NotImplementedError
+
+class InstantIREnhance(Enhance):
+    def __init__(self, quality):
+        super().__init__(quality, "instantir")
+
+    def init(self):
+        init_instantir()
+
+    def compress(self, image_array):
+        if image_array is None:
+            return image_array, 24
+
+        if not isinstance(image_array, np.ndarray):
+            image_array = np.array(image_array)
+
+        if image_array.dtype != np.uint8:
+            image_array = image_array.astype(np.uint8)
+        # x = transforms.ToTensor()(image_array).unsqueeze(0).to(device)
+        rec_np = instantir_enhance(image_array, step=0, cam="compressimg")
+        # rec_img =(rec_np*255).clamp(0, 255).byte().squeeze(0).permute(1, 2, 0).cpu().numpy()
+        return rec_np, 24
+
+class SwinIREnhance(Enhance):
+    def __init__(self, quality):
+        super().__init__(quality, "swinir")
+
+    def init(self):
+        init_swinir()
+
+    def compress(self, image_array):
+
+        if image_array is None:
+            return image_array, 24
+
+        if not isinstance(image_array, np.ndarray):
+            image_array = np.array(image_array)
+
+        if image_array.dtype != np.uint8:
+            image_array = image_array.astype(np.uint8)
+        # x = transforms.ToTensor()(image_array).unsqueeze(0).to(device)
+        rec_np = swinir_enhance(image_array, step=0, cam="compressimg")
+        # rec_img =(rec_np*255).clamp(0, 255).byte().squeeze(0).permute(1, 2, 0).cpu().numpy()
+        return rec_np, 24
+
+
+class DFPIREnhance(Enhance):
+    def __init__(self, quality):
+        super().__init__(quality, "dfpir")
+
+    def init(self):
+        init_dfpir()
+
+    def compress(self, image_array):
+        if image_array is None:
+            return image_array, 24
+
+        if not isinstance(image_array, np.ndarray):
+            image_array = np.array(image_array)
+
+        if image_array.dtype != np.uint8:
+            image_array = image_array.astype(np.uint8)
+
+        rec_np = dfpir_enhance(image_array, step=0, cam="compressimg")
+
+        return rec_np, 24
+
+
+class RealESRGANEnhance(Enhance):
+    def __init__(self, quality):
+        super().__init__(quality, "realesrgan")
+
+    def init(self):
+        init_realesrgan()
+
+    def compress(self, image_array):
+        if image_array is None:
+            return image_array, 24
+
+        if not isinstance(image_array, np.ndarray):
+            image_array = np.array(image_array)
+
+        if image_array.dtype != np.uint8:
+            image_array = image_array.astype(np.uint8)
+        # x = transforms.ToTensor()(image_array).unsqueeze(0).to(device)
+        rec_np = realesrgan_enhance(image_array, step=0, cam="compressimg")
+        # rec_img =(rec_np*255).clamp(0, 255).byte().squeeze(0).permute(1, 2, 0).cpu().numpy()
+        return rec_np, 24
+
+
+class FoundIREnhance(Enhance):
+    def __init__(self, quality):
+        super().__init__(quality, "foundir")
+
+    def init(self):
+        init_foundir()
+
+    def compress(self, image_array):
+        if image_array is None:
+            return image_array, 24
+
+        if not isinstance(image_array, np.ndarray):
+            image_array = np.array(image_array)
+
+        if image_array.dtype != np.uint8:
+            image_array = image_array.astype(np.uint8)
+
+        rec_np = foundir_enhance(image_array, step=0, cam="compressimg")
+
+        return rec_np, 24
+
+class VarFormerEnhance(Enhance):
+    def __init__(self, quality):
+        super().__init__(quality, "varformer")
+
+    def init(self):
+        init_varformer()
+
+    def compress(self, image_array):
+        if image_array is None:
+            return image_array, 24
+
+        if not isinstance(image_array, np.ndarray):
+            image_array = np.array(image_array)
+
+        if image_array.dtype != np.uint8:
+            image_array = image_array.astype(np.uint8)
+
+        rec_np = varformer_enhance(image_array, step=0, cam="compressimg")
+        return rec_np, 24
+
+class HypirEnhance(Enhance):
+    def __init__(self, quality):
+        super().__init__(quality, "hypir")
+
+    def init(self):
+        init_hypir()
+
+    def compress(self, image_array):
+        import numpy as np
+
+        if image_array is None:
+            return image_array, 24
+
+        if not isinstance(image_array, np.ndarray):
+            image_array = np.array(image_array)
+
+        if image_array.dtype != np.uint8:
+            image_array = np.clip(image_array, 0, 255).astype(np.uint8)
+
+        rec_np = hypir_enhance(
+            image_array,
+            fixed_prompt="make the scientific image clear and readable",
+            patch_size=512,
+            stride=256,
+        )
+        return rec_np, 24
+
+class BirdEnhance(Enhance):
+    def __init__(self, quality):
+        super().__init__(quality, "bird")
+
+    def init(self):
+        init_bird()
+
+    def compress(self, image_array):
+        if image_array is None:
+            return image_array, 24
+
+        if not isinstance(image_array, np.ndarray):
+            image_array = np.array(image_array)
+
+        if image_array.dtype != np.uint8:
+            image_array = image_array.astype(np.uint8)
+
+        rec_np = bird_enhance(image_array, step=0, cam="compressimg")
+        return rec_np, 24
+
+class SDXLEnhance(Enhance):
+    def __init__(self, quality):
+        super().__init__(quality, "sdxl")
+
+    def init(self):
+        init_sdxl()
+
+    def compress(self, image_array):
+        rec_np = sdxl_enhance(image_array, step=0, cam="compressimg")
+        return rec_np, 24
+
+class SD21Enhance(Enhance):
+    def __init__(self, quality):
+        super().__init__(quality, "sd21")
+
+    def init(self):
+        init_sd21()
+
+    def compress(self, image_array):
+        rec_np = sd21_enhance(image_array, step=0, cam="compressimg")
+        return rec_np, 24
+
+class KandinskyEnhance(Enhance):
+    def __init__(self, quality):
+        super().__init__(quality, "kandinsky")
+
+    def init(self):
+        init_kandinsky()
+
+    def compress(self, image_array):
+        rec_np = kandinsky_enhance(image_array, step=0, cam="compressimg")
+        return rec_np, 24
+
+class PlaygroundEnhance(Enhance):
+    def __init__(self, quality):
+        super().__init__(quality, "playground")
+
+    def init(self):
+        init_playground()
+
+    def compress(self, image_array):
+        rec_np = playground_enhance(image_array, step=0, cam="compressimg")
+        return rec_np, 24
+
+class SSD1BEnhance(Enhance):
+    def __init__(self, quality):
+        super().__init__(quality, "ssd1b")
+
+    def init(self):
+        init_ssd1b()
+
+    def compress(self, image_array):
+        rec_np = ssd1b_enhance(image_array, step=0, cam="compressimg")
+        return rec_np, 24
 
 class PillowCodec(Codec):
     def __init__(self, quality, fmt):
@@ -167,6 +438,7 @@ class CompressAICodec(Codec):
     def __init__(self, quality, model_name):
         super().__init__(quality)
         model_map = {
+  'hypir': hypir_enhance,
             'mbt2018': mbt2018,
             'mbt2018_mean': mbt2018_mean,
             'cheng2020_attn': cheng2020_attn,
@@ -361,22 +633,39 @@ class RwkvCodec(AICODECEXT):
         return rec_img, bpp_img
 
 class COMPRESSIMG:
-    def __init__(self, model='mbt2018_mean', quality=1 , downsample:str = '1'):
-        self.changenet(model, quality , downsample)
+    def __init__(self, model='mbt2018_mean', quality=1 , downsample:str = '1',dis_type=0):
+        self.changenet(model, quality , downsample, dis_type)
         self.initcache()
 
-    def changenet(self, model='mbt2018_mean', quality=1 , downsample:str = '1'):
-        if model in ['jpeg', 'webp', 'hevc', 'vvc','lichpcm','dcae','rwkv']:
-            codec_map = {
+    def changenet(self, model='mbt2018_mean', quality=1, downsample:str = '1',dis_type=0):
+        codec_map = {
                 'jpeg': JpegCodec,
                 'webp': WebpCodec,
+                'instantir': InstantIREnhance,
+                'swinir': SwinIREnhance,
+                'dfpir': DFPIREnhance,
+                'realesrgan': RealESRGANEnhance,
+                'varformer': VarFormerEnhance,
+                'hypir': HypirEnhance,
+                'bird': BirdEnhance,
+                'foundir': FoundIREnhance,
                 # 'hevc': HEVCCodec,
                 # 'vvc': VVCCodec,
+                'sdxl': SDXLEnhance,
+                'sd21': SD21Enhance,
+                'playground': PlaygroundEnhance,
+                'kandinsky': KandinskyEnhance,
+                'ssd1b': SSD1BEnhance,
                 'lichpcm': LICHPCMCodec,
                 'dcae': DCAECodec,
                 'rwkv': RwkvCodec,
+                'distort': Distorter
             }
-            self.net = codec_map[model](quality)
+        if model in codec_map.keys():
+            if model == 'distort':
+                self.net = codec_map[model](quality,dis_type)
+            else:
+                self.net = codec_map[model](quality)
         else:
             self.net = CompressAICodec(quality, model)
         assert downsample in list(DOWNSAMPLEGRADE.keys()),print(f"downsample range should in list{(DOWNSAMPLEGRADE.keys())}")
@@ -385,13 +674,13 @@ class COMPRESSIMG:
 
     def compress(self, imagearray, saveimg=False):
         downsample = self.downsample
-        if downsample:
+        if downsample and downsample != '1':
             imagearray = scale_n_over_base(imagearray,True,DOWNSAMPLEGRADE[downsample],8)
 
         rec_np, bpp = self.net.compress(imagearray)
         
         
-        if downsample:
+        if downsample and downsample != '1':
             # rec_np = transforms.ToTensor()(rec_np).unsqueeze(0)
             # rec_np = crop(rec_np, padding)
             # rec_np = rec_np.squeeze(0).permute(1,2,0).numpy()
@@ -419,7 +708,35 @@ class COMPRESSIMG:
         original_tensor = transforms.ToTensor()(original_image_array).unsqueeze(0).to(device)
         reconstructed_tensor = transforms.ToTensor()(reconstructed_image_array).unsqueeze(0).to(device)
         return cal_psnr(original_tensor, reconstructed_tensor)
+class Pipeline(Codec):
+    def __init__(self, codecs: list=None):
+        self.codecs = []
+        if codecs:
+            for c in codecs:
+                self.add(c)
+    
+    def add(self,codec: Codec):
+        if not isinstance(codec, Codec):
+            raise TypeRrror(f"Expected a Codec instance, but got {type(codec)}")
+        self.codecs.append(codec)
+        return self
 
+    def compress(self, image_array,saveimg=False):
+        result = image_array
+        h,w = result.shape[:2]
+        # print(h,w)
+        for i, codec in enumerate(self.codecs):
+            # try:
+            preresult = result
+            result,_= codec.compress(result)
+            # except Exception as e:
+            #     raise RuntimeError(
+            #         f"Error at step {i} ({codec}): {e}"
+            #     ) from e
+        
+        result = cv.resize(result, (w, h), interpolation=cv.INTER_LINEAR)
+        return result,_
+    
 def model_test_all():
     import matplotlib.pyplot as plt
     # Load the example image 'a.png'
@@ -514,3 +831,29 @@ if __name__ == '__main__':
     model_test_all()
 
 
+class HypirEnhance(Enhance):
+    def __init__(self, quality):
+        super().__init__(quality, "hypir")
+
+    def init(self):
+        init_hypir()
+
+    def compress(self, image_array):
+        import numpy as np
+
+        if image_array is None:
+            return image_array, 24
+
+        if not isinstance(image_array, np.ndarray):
+            image_array = np.array(image_array)
+
+        if image_array.dtype != np.uint8:
+            image_array = np.clip(image_array, 0, 255).astype(np.uint8)
+
+        rec_np = hypir_enhance(
+            image_array,
+            fixed_prompt="make the scientific image clear and readable",
+            patch_size=512,
+            stride=256,
+        )
+        return rec_np, 24

@@ -5,7 +5,7 @@ from pathlib import Path
 
 CODEC_DIR = Path(__file__).parent / 'codec'
 
-def main():
+def test1():
     import matplotlib.pyplot as plt
     # Load the example image 'a.png'
     try:
@@ -68,6 +68,12 @@ def main():
 
     plt.tight_layout()
     plt.show()
-
+def test2():
+    image = np.array(Image.open("img_distort/example.png"))
+    cpr = COMPRESSIMG(model="distort",type=23)
+    rec = cpr.compress(image)
+    rec_image = Image.fromarray(rec)
+    rec_image.save("img_distort/rec_example.png")
+    print(f"Saved reconstructed image to '../img_distort/rec_example.png'")
 if __name__ == "__main__":
-    main()
+    test2()

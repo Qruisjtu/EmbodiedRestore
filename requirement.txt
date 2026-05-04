@@ -9,6 +9,8 @@ gym==0.25.2
 h5py
 hydra-core
 imageio
+imageio-ffmpeg
+numba
 json-numpy
 jsonlines
 matplotlib

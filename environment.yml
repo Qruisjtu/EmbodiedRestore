@@ -1,4 +1,4 @@
-name: Ecomp2
+name: Ecomp
 channels:
   - defaults
 dependencies:
@@ -38,4 +38,6 @@ dependencies:
       - tensorflow-graphics
       - jsonlines
       - pyopengl-accelerate
+      - imageio-ffmpeg
+      - numba
       - git+https://github.com/moojink/dlimp_openvla.git

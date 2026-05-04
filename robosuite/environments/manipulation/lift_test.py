@@ -173,23 +173,24 @@ class LiftTest(ManipulationEnv):
             obj_rotation = np.pi / 2
 
         # 物体随机放置采样器
-        # if self.placement_initializer is not None:
-        #     self.placement_initializer.reset()
-        #     self.placement_initializer.add_objects(self.object)
-        # else:
-        self.placement_initializer = UniformRandomSampler(
-            name="ObjectSampler",
-            mujoco_objects=[self.object],
-            x_range=[0.1, 0.1],
-            y_range=[0.2, 0.2],
-            rotation=obj_rotation,
-            rotation_axis='x',
-            ensure_object_boundary_in_range=False,
-            ensure_valid_placement=True,
-            reference_pos=self.table_offset,
-            z_offset=0.01,
-            # rng=self.rng
-        )
+        if self.placement_initializer is not None:
+            self.placement_initializer.reset()
+            self.placement_initializer.add_objects(self.object)
+        else:
+            self.placement_initializer = UniformRandomSampler(
+                name="ObjectSampler",
+                mujoco_objects=[self.object],
+                x_range=[-0.1, 0.1],
+                y_range=[-0.2, 0.2],
+                # rotation=obj_rotation,
+                # rotation_axis='x',
+                rotation=None,
+                ensure_object_boundary_in_range=False,
+                ensure_valid_placement=True,
+                reference_pos=self.table_offset,
+                z_offset=0.01,
+                # rng=self.rng
+            )
 
         # 构建 ManipulationTask
         self.model = ManipulationTask(
@@ -256,7 +257,7 @@ class LiftTest(ManipulationEnv):
         obj_height = self.sim.data.body_xpos[self.obj_body_id][2]
         # table_height = self.model.mujoco_arena.table_offset[2]
 
-        return obj_height > self.initheight + 0.12
+        return obj_height > self.initheight + 0.1
 
     def env_metadata(self):
         metadata = self.arena_metadata
