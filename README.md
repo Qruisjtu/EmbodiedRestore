@@ -1,54 +1,41 @@
 <div align="center">
 
- <h1>Embodied Image Compression
+ <h1>Embodied Image Restoration</h1>
 
- The first embodied image compression benchmark
-Yuan Tian, Xiangyang Zhu, Zicheng Zhang, Xiaohong Liu, Weisi Lin, Guangtao Zhai
- <div>
-      <a href="https://lcysyzxdxc.github.io" target="_blank">Chunyi Li</a><sup>1</sup><sup>2</sup><sup>3</sup><sup>*</sup>,
-      <a href="" target="_blank">Rui Qing</a><sup>1</sup><sup>*</sup>,
-      <a href="https://scholar.google.com/citations?hl=en&user=Eru2-TYAAAAJ" target="_blank">Jianbo Zhang</a><sup>1</sup>,
-      <a href="" target="_blank">Yuan Tian</a><sup>2</sup>,
-      <a href="" target="_blank">Xiangyang Zhu</a><sup>2</sup>,
-      <a href="" target="_blank">Zicheng Zhang</a><sup>1</sup><sup>2</sup>,
-      <a href="" target="_blank">Xiaohong Liu</a><sup>1</sup>,
-      <a href="" target="_blank">Weisi Lin</a><sup>3</sup>,
-      <a href="https://ee.sjtu.edu.cn/en/FacultyDetail.aspx?id=24&infoid=153&flag=153" target="_blank">Guangtao Zhai</a><sup>1</sup><sup>2</sup>,
- </div>
+The first embodied image restoration benchmark
 
- <div>
-  <sup>1</sup>Shanghai Jiaotong University,  <sup>2</sup>Shanghai AI Lab,  <sup>3</sup>Nanyang Technological University.  <sup>*</sup>contributed equally to this work.
- </div> 
  
  <div style="width: 100%; text-align: center; margin:auto;">
-      <img style="width:100%" src="figure/Overview.png">
+      <img style="width:100%" src="figure/fig2.png">
  </div>
 </div>
 
-EmbodiedComp is a closed-loop benchmark frame for VLA(Vision-Language-Action) model.We use robosuite to build a environment with random texture and objects for an UR5 robotic arm with Pi0-FAST,Pi0.5 and OpenVLA-oft.
-To align with Real-world applications of Embodied AI, we deploy the compression algorithm within the Embodied Inference pipeline for the first time, enabling closed-loop validation. Since compression distortion accumulates in each loop-iterations, evaluation metrics include both Success Rate (SR) and the Step for iterations to represent efficiency.
+Existing image restoration methods are primarily optimized for human visual perception or conventional machine vision tasks, while their actual value for embodied agents in closed-loop decision-making remains underexplored. 
+
+To advance image restoration for robot vision systems, we developed EmbodiedRestore. EmbodiedRestore is a closed-loop benchmark frame for VLA   (Vision-Language-Action) model build upon RmbodiedComp, which use robosuite to build a environment with random texture and objects for an UR5 robotic arm with Pi0-FAST,Pi0.5 and OpenVLA-oft agents. The visual signals are processed by noise and image restoration before being sent to the VLA model for inference. In the closed loop, the correspondence between the image and the task success rate/number of steps is obtained.
+
+
 
 <div align="center">
 
-🤗 [Weight&Dataset Download:]() [Pi](https://huggingface.co/qruisjtu/pi_ur5_fintuned) [Openvla](https://huggingface.co/qruisjtu/openvla_ur5_finetuned) [Image](https://drive.google.com/drive/folders/1uU1vnxE5rk-ok8MNgQ1sgFkZB5UWx3nf?usp=sharing)| 📚 [Paper](https://arxiv.org/abs/2512.11612) | 📈[Benchmark]()
+🤗 [Dataset Download](https://huggingface.co/datasets/qruisjtu/EmbodiedRestore) | 📚 [Paper]() | 📈[Benchmark]()
 
 </div>
 
 ## Release
-- [2026/1/22] [Image dataset](https://drive.google.com/drive/folders/1uU1vnxE5rk-ok8MNgQ1sgFkZB5UWx3nf?usp=sharing) for **EmbodiedComp** is upgrade
-- [2026/1/14]   🤗[Huggingface model weight](https://huggingface.co/qruisjtu/pi_ur5_fintuned) for **EmbodiedComp** is upgrade.
-- [2026/1/10] 🔥 [Github repo](https-link) for **EmbodiedComp** is online.
-- [To Do] [ ] Real-world data.
+- [2026/5/5] 🤗 [Image dataset](https://huggingface.co/datasets/qruisjtu/EmbodiedRestore) for **EmbodiedRestore** is upgrade
+- [2026/5/5] 🔥 [Github repo](https-link) for **EmbodiedRestore** is online.
+
 
 # Installing
 Prepare environment
 ```bash
-git clone https://github.com/Jianbo-maker/EmbodiedComp.git
-cd EmbodiedComp
+git clone https://github.com/Qruisjtu/EmbodiedRestore.git
+cd EmbodiedRestore
 # conda env create (this may take a while)
-conda env create -n Ecomp
+conda env create -n EIR
 # activate conda
-conda activate Ecomp
+conda activate EIR
 ```
 Or you can prepare environment by 
 ```bash
@@ -78,114 +65,164 @@ python pi.py
 ```
 The benchmark's result will be saved under folder `data/benchmark`
 
-# Test your own compress codec
-You can modify the image or add your own compress codec in EmbodiedComp to test. To use your own codec, you have to register it and design a Quality-Downsampling table for certain BPP range. 
-### 1. Add your codec
-You add your own compress codec in the benchmark by changing following lines of code.
+# Benchmark your own image restoration model
+EmbodiedRestore treats every image restoration method as a `Codec` node. To benchmark a new restoration model, add one model implementation under `compress/`, wrap it in `compress/compressimg.py`, and then select it in the `noise_thread` pipeline of `pi.py` or `openvla.py`.
 
-- [pi](pi.py#L60) and [openvla](openvla.py#L137)'s function `build_obs_ur5` transfer the camera's image to agent, you can modify our extract the image.
+## 1. Add your model implementation
+
+Create `compress/xxx_impl.py`, where `xxx` is the name of your restoration method. The file should expose two functions:
+
+- `init_xxx()`: load the local model code and weights once.
+- `xxx_enhance(image: np.ndarray, ...) -> np.ndarray`: receive one RGB image array in HWC format and return one restored RGB image array in HWC format.
+
+Example:
+
 ```python
-def build_obs_ur5(obs,step:int,iscpr=False,prompt:str=PROMPT) :
-    """
-    convert observation from mujoco to pi's config format
-    You can modify or compress the image from camera here
-    """
-    state  = np.concatenate((obs["robot0_joint_pos"],[obs["robot0_gripper_qpos"][0]]),axis=0)
-    agent_raw = np.ascontiguousarray(obs["agentview_image"][::-1, ::-1]).astype(np.uint8)
-    wrist_raw = np.ascontiguousarray(obs["robot0_eye_in_hand_image"][::-1, ::-1]).astype(np.uint8)
-    if iscpr: 
-        agent_cpr = cpr.compress(agent_raw, saveimg=False)[0]
-        wrist_cpr = cpr.compress(wrist_raw, saveimg=False)[0]
-        obs_new = {
-            "base_rgb": agent_cpr,   
-            "wrist_rgb":wrist_cpr,    
-            "state":     state,
-            "prompt":   prompt,     
-        }
-        first_frame = [agent_cpr, wrist_cpr, agent_raw, wrist_raw] if step == 0 else None
-    else:
-        obs_new = {
-            "base_rgb": agent_raw,  
-            "wrist_rgb":wrist_raw,  
-            "state":     state,
-            "prompt":   prompt, 
-        }
-        first_frame = None
-    return obs_new , first_frame
+# compress/xxx_impl.py
+import sys
+from pathlib import Path
+
+import numpy as np
+import torch
+
+XXX_REPO_DIR = Path("/path/to/your/local/xxx/repo")
+XXX_WEIGHT_PATH = Path("/path/to/your/local/xxx/weights/model.pth")
+
+if str(XXX_REPO_DIR) not in sys.path:
+    sys.path.insert(0, str(XXX_REPO_DIR))
+
+_MODEL = None
+_DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+
+def init_xxx():
+    global _MODEL
+    if _MODEL is not None:
+        return _MODEL
+
+    # Import your model from XXX_REPO_DIR and load local weights here.
+    # from your_model_package import build_model
+    # model = build_model(...)
+    # checkpoint = torch.load(XXX_WEIGHT_PATH, map_location=_DEVICE)
+    # model.load_state_dict(checkpoint["params"], strict=True)
+    # model.to(_DEVICE).eval()
+    # _MODEL = model
+    return _MODEL
+
+
+@torch.no_grad()
+def xxx_enhance(image: np.ndarray, step: int = 0, cam: str = "compressimg") -> np.ndarray:
+    if _MODEL is None:
+        init_xxx()
+
+    if image is None:
+        return image
+    if not isinstance(image, np.ndarray):
+        image = np.array(image)
+    if image.dtype != np.uint8:
+        image = np.clip(image, 0, 255).astype(np.uint8)
+    if image.ndim == 2:
+        image = np.stack([image] * 3, axis=-1)
+    if image.shape[-1] != 3:
+        raise ValueError(f"Expected HWC RGB image, got shape={image.shape}")
+
+    # Convert image to your model input format, run inference,
+    # then convert the output back to uint8 RGB HWC ndarray.
+    restored = image
+    return restored
 ```
 
-- Our class [COMPRESSIMG](compress/compressimg.py#L367) ('cpr' in pi\.py) collects many useful codec, you can add your own codec class from base class `Codec` and rewrite its `compress` function, which recieve raw image array(after downsampling if need) and return decoded image array and bits per pixel after compress. Then announce your class in [codecmap](compress/compressimg.py#L372)
-Below is an example of Codec from CompressAI
+Replace `XXX_REPO_DIR`, `XXX_WEIGHT_PATH`, model construction, weight loading, preprocessing, and postprocessing with your local implementation.
+
+## 2. Register the model in `compress/compressimg.py`
+
+Import your implementation at the top of `compress/compressimg.py`:
+
 ```python
-class CompressAICodec(Codec):
-    def __init__(self, quality, model_name):
-        super().__init__(quality)
-        model_map = {
-            'mbt2018': mbt2018,
-            'mbt2018_mean': mbt2018_mean,
-            'cheng2020_attn': cheng2020_attn,
-            'bmshj2018_factorized': bmshj2018_factorized,
-            'bmshj2018_hyperprior': bmshj2018_hyperprior,
-            'cheng2020_anchor': cheng2020_anchor,
-        }
-        self.net = model_map[model_name](
-            quality=quality, metric='mse', pretrained=True, progress=True
-        ).eval().to(device)
+from compress.xxx_impl import init_xxx, xxx_enhance
+```
+
+Then add an `Enhance` wrapper:
+
+```python
+class XXXEnhance(Enhance):
+    def __init__(self, quality):
+        super().__init__(quality, "xxx")
+
+    def init(self):
+        init_xxx()
 
     def compress(self, image_array):
-        tensor = transforms.ToTensor()(image_array).unsqueeze(0).to(device)
-        with torch.no_grad():
-            out_net = self.net(tensor)
-        rec = out_net['x_hat'].clamp_(0, 1).squeeze().cpu()
-        rec_np = (rec * 255).clamp(0, 255).byte().permute(1, 2, 0).numpy()
-        bpp = self._compute_bpp(out_net)
-        return rec_np, bpp
+        if image_array is None:
+            return image_array, 24
+        if not isinstance(image_array, np.ndarray):
+            image_array = np.array(image_array)
+        if image_array.dtype != np.uint8:
+            image_array = np.clip(image_array, 0, 255).astype(np.uint8)
+
+        rec_np = xxx_enhance(image_array, step=0, cam="compressimg")
+        return rec_np, 24
 ```
 
-We support the following codecs out of the box:
-- mbt2018_mean
-- mbt2018
-- cheng2020_attn
-- bmshj2018_factorized
-- bmshj2018_hyperprior
-- cheng2020_anchor , other codec from compressai is easy to add
-- jpeg
-- webp
-- <span style="color: gray">lichpcm (Additional repo https://github.com/lyq133/LIC-HPCM required)</span>
-- <span style="color: gray">dcae (Additional repo https://github.com/CVL-UESTC/DCAE required)</span>
-- <span style="color: gray">rwkvcompress (Additional repo https://github.com/sjtu-medialab/RwkvCompress required)</span>
-### 2. Design your Quality-Downsampling pair table
-To achieve a high compression ratio and easy to compare codecs in same bpp zone, we have to set Quality-Downsample table for different codecs.
+The returned `24` is a placeholder bpp value for restoration-only methods. The closed-loop benchmark uses the restored observation for VLA inference.
+
+## 3. Select the model in `noise_thread`
+
+In `pi.py` or `openvla.py`, import the wrapper in `noise_thread` and add it to the `Enhance` list:
+
 ```python
-MODELQUADOWN={
-    "mbt2018":[[1,'1/4'],[1,'1/2'],[1,'3/4'],[1,'1'],[2,'1']],
-    "cheng2020_anchor":[[1,'1/4'],[1,'1/2'],[1,'3/4'],[1,'1'],[2,'1']],
-    "bmshj2018_hyperprior":[[1,'1/4'],[1,'1/2'],[1,'3/4'],[2,'1']],
-    "jpeg":[[5,'1/8'],[10,'1/8'],[20,'1/8'],[40,'1/8'],[10,'1/4']],
-    "webp":[[5,'1/8'],[5,'1/4'],[10,'3/8'],[10,'1/2'],[20,'1/2'],[40,'1/2']],
-    ...
-}
+from compress.compressimg import (
+    Distorter,
+    VarFormerEnhance,
+    HypirEnhance,
+    XXXEnhance,
+)
+
+Enhance = [VarFormerEnhance, HypirEnhance, XXXEnhance][etype]
 ```
-for example, [1,'1/4'] refers to choose quality 1 and 1/4 Downsampling.Our parameters are sampled from the upper-left envelope curve in the corresponding BPP range(0.01-0.10) of the “PSNR vs. Downsampling Quality” scatter plot for the respective codec.
 
-With proper pairs of quality-downsampling, you can compare different codecs in same BPP range.For example, we use [0.01-0.1] bpp to align all the codec.
- <div style="width: 100%; text-align: center; margin:auto;">
-      <img style="width:45%" src="figure/rate_bpp.png">
-      <img style="width:45%" src="figure/step_bpp.png">
- </div>
+The benchmark builds the restoration flow with `compressimg.Pipeline`. For the no-noise baseline, the pipeline only runs restoration:
 
-## Citation
-
-If you find our work interesting, please feel free to cite our paper:
-
-```bibtex
-@misc{li2025embodiedimagecompression,
-      title={Embodied Image Compression}, 
-      author={Chunyi Li and Rui Qing and Jianbo Zhang and Yuan Tian and Xiangyang Zhu and Zicheng Zhang and Xiaohong Liu and Weisi Lin and Guangtao Zhai},
-      year={2025},
-      eprint={2512.11612},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV},
-      url={https://arxiv.org/abs/2512.11612}, 
-}
+```python
+cpr = compressimg.Pipeline([
+    Enhance(quality=4),
+])
 ```
+
+For noisy observations, the pipeline first applies the selected degradation and then restores the degraded image:
+
+```python
+cpr = compressimg.Pipeline([
+    Distorter(quality=1, type=ntype),
+    Enhance(quality=4),
+])
+```
+
+Run the benchmark with the selected `etype`. Results are saved under `data/benchmark/`, grouped by agent and enhancement class name.
+
+## 4. Quick sanity check
+
+Before launching the full robot benchmark, test the wrapper on one image:
+
+```python
+from PIL import Image
+import numpy as np
+
+from compress.compressimg import Distorter, Pipeline, XXXEnhance
+
+image = np.array(Image.open("path/to/test.png").convert("RGB"))
+cpr = Pipeline([
+    Distorter(quality=1, type=0),
+    XXXEnhance(quality=4),
+])
+restored, _ = cpr.compress(image)
+Image.fromarray(restored).save("xxx_restored.png")
+```
+
+Check that the output is an RGB `uint8` image, has the same height and width as the input after `Pipeline.compress`, and does not trigger CUDA/model import errors.
+
+<!-- ## Citation
+
+If you find our work interesting, please feel free to cite our paper: -->
+
+

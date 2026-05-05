@@ -4,19 +4,19 @@ import math
 import os
 import subprocess
 import time
-# from compress.instantir_impl import init_instantir, instantir_enhance
-# from compress.dfpir_impl2 import init_dfpir, dfpir_enhance
-# from compress.swinir_impl2 import init_swinir, swinir_enhance
-# from compress.realesrgan_impl2 import init_realesrgan, realesrgan_enhance
-# from compress.foundir_impl2 import init_foundir, foundir_enhance
-# from compress.hypir_impl import init_hypir, hypir_enhance
-# from compress.bird_impl2 import init_bird, bird_enhance
-# from compress.sdxl_impl2 import init_sdxl, sdxl_enhance
-# from compress.sd21_impl2 import init_sd21, sd21_enhance
-# from compress.playground_impl2 import init_playground, playground_enhance
-# from compress.ssd1b_impl2 import init_ssd1b, ssd1b_enhance
-# from compress.kandinsky_impl2 import init_kandinsky, kandinsky_enhance
-# from compress.varformer_impl2 import init_varformer, varformer_enhance
+from compress.instantir_impl import init_instantir, instantir_enhance
+from compress.dfpir_impl2 import init_dfpir, dfpir_enhance
+from compress.swinir_impl2 import init_swinir, swinir_enhance
+from compress.realesrgan_impl2 import init_realesrgan, realesrgan_enhance
+from compress.foundir_impl2 import init_foundir, foundir_enhance
+from compress.hypir_impl import init_hypir, hypir_enhance
+from compress.bird_impl2 import init_bird, bird_enhance
+from compress.sdxl_impl2 import init_sdxl, sdxl_enhance
+from compress.sd21_impl2 import init_sd21, sd21_enhance
+from compress.playground_impl2 import init_playground, playground_enhance
+from compress.ssd1b_impl2 import init_ssd1b, ssd1b_enhance
+from compress.kandinsky_impl2 import init_kandinsky, kandinsky_enhance
+from compress.varformer_impl2 import init_varformer, varformer_enhance
 from pathlib import Path
 import importlib
 import cv2 as cv
